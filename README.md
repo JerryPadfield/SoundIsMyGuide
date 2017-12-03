@@ -12,3 +12,4 @@ University of the West of Scotland. These were used to create an animated piece 
 
 See the finished film(s) at: [Sound is My Guide](http://soundismyguide.wordpress.com)
 
+![Still from the film](https://soundismyguide.files.wordpress.com/2017/12/cropped-wall1.png "Still from the film")
