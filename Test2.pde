@@ -6,8 +6,8 @@
  */
 import processing.sound.*;
 static final int FRAME_RATE=25;
-private boolean RECORDING=false;
-static int take=0;
+private boolean RECORDING=true;
+static int take=4;
 FFT fft;
 SoundFile in;
 int bands = 512;
@@ -15,6 +15,8 @@ float[] spectrum = new float[bands];
 JSONArray frames;
 int[][] result;
 float t, c;
+private boolean started=false;
+static final float ANI_RADIUS=1.8;
 
 float ease(float p) {
   return 3*p*p - 2*p*p*p;
@@ -111,9 +113,9 @@ void draw_jd(){
     for (int j=0; j<n; j++){
       float x = map(j, 0, n-1, -1, width);
       
-      float intensity = ease(constrain(map(dist(x, y, width/2, height/2), 0, 0.5*width,1,0),0,1),2.0);
+      float intensity = ease(constrain(map(dist(x, y, width/2, height/2), 0, ANI_RADIUS*width,1,0),0,1),2.0);
       
-      float yy = y + intensity*l*(float)noise(spectrum[j]*255);
+      float yy = y + intensity*l*(float)noise(spectrum[j]*height);
       
       vertex(x, yy);
     }
@@ -123,7 +125,7 @@ void draw_jd(){
 }
 
 void setup() {
-  size(512, 500);
+  size(800, 600);
   background(0);
   
   frames=new JSONArray();
@@ -192,10 +194,15 @@ void draw_lines(){
     }
   }
 }
-void exit()  {      
+//void exit()  {      
 //    println("Closing sketch");
     // Place here the code you want to execute on exit
-  println("in stop");
+ // println("in stop");
  // saveJSONArray(frames, "data/frames.json");
-  super.exit();
-}  
+ // super.exit();
+//}  
+public void keyPressed(){
+  if (key=='s' || key == 'S'){
+    started=true;
+  }
+}

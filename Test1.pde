@@ -9,8 +9,8 @@ import ddf.minim.ugens.*;
 // options to change here:
 static final int FRAME_RATE=24;
 static final boolean SAVE_FRAMES=false;
-static final AnimationType ani=AnimationType.PLOT;
-static final float FLASH_THRESHOLD=0.3;
+static final AnimationType ani=AnimationType.WALL;
+static final float FLASH_THRESHOLD=0.03;
 
 // Different animation algorithms
 enum AnimationType {
@@ -20,7 +20,7 @@ enum AnimationType {
 };
 static final int cellsize=2;
 static final int BUFFER_SCALE=1;
-static final String fileName="Recording.mp3";
+static final String fileName="Recording.wav";
 
 Minim minim;
 AudioOutput audioOutput;
@@ -28,8 +28,9 @@ FilePlayer filePlayer;
 PGraphics buffer;
 
 void setup(){
-  size(800, 600, P3D);
- // fullScreen(P3D); noCursor();
+ //size(800, 600, P3D);
+  //size(800, 600);
+  fullScreen(P3D); noCursor();
   minim=new Minim(this);
   audioOutput=minim.getLineOut(Minim.STEREO);
   filePlayer = new FilePlayer(minim.loadFileStream(fileName));
@@ -39,6 +40,7 @@ void setup(){
   frameRate(FRAME_RATE);
 //  step=22;
   buffer=createGraphics(width, height, P3D);
+  //buffer=createGraphics(width, height);
 //  buffer.rect(0, 0, 800, 600);
   buffer.smooth(32);
   buffer.hint(ENABLE_DEPTH_TEST);
@@ -57,17 +59,20 @@ void draw(){
   surface.setTitle("FPS: "+frameRate);
   switch (ani) {
     case FLASH:
+    // if (started)
       drawFlash();
       break;
     case WALL:
       drawBricks();
       break;
     case PLOT:
+     if (started)
       drawPlot();
+ //     drawFlash();
       break;
   }
   if (SAVE_FRAMES){
-    saveFrame("frames/frame-######.png");
+    saveFrame("frames/plot/frame-######.png");
   }
 }
 
@@ -87,6 +92,11 @@ class Brick {
      g.translate(loc.x, loc.y, loc.z);
      g.fill(255);
      g.stroke(0);
+     int WAIT_FR=50;
+     if (frameCount < WAIT_FR+127 && frameCount >= WAIT_FR)
+       g.stroke(WAIT_FR+255-((frameCount-WAIT_FR)*2));
+     if (frameCount < WAIT_FR)
+       g.stroke(255);
 //  g.noStroke();
      g.box(Brick.WIDTH, Brick.HEIGHT, Brick.DEPTH);
     g.popMatrix();
@@ -115,6 +125,8 @@ void drawBricks(){
   }
   //buffer.filter(BLUR, 1);
   //buffer.filter(THRESHOLD, 0.3);
+//  if (frameCount<100)
+//    buffer.filter(DILATE);
   buffer.endDraw();
   image(buffer, 0, 0);
 }
@@ -123,8 +135,12 @@ void drawFlash(){
   buffer.beginDraw();
   float f=abs(audioOutput.left.get(0));
   //println(f);
+  //  buffer.blendMode(DIFFERENCE);
   if (f>=FLASH_THRESHOLD){
     buffer.background(255);
+    //buffer.stroke(255);
+   // buffer.fill(255);
+   // buffer.rect(0, 0, width, height);
    // println("flash");
   } else {
     buffer.background(0);
@@ -137,22 +153,24 @@ void drawPlot(){
  // moveGraphics(buffer);
   buffer.beginDraw();
   //buffer.background(0);
-  buffer.stroke(128, 128, 128, 80);
-  buffer.fill(0, 0, 0, 10);
-  buffer.strokeWeight(2);
-  buffer.blendMode(BLEND);
+  //buffer.stroke(255, 128, 128, 80);
+  buffer.stroke(255);
+  //buffer.fill(0, 0, 0, 10);
+  buffer.strokeWeight(5);
+  //buffer.blendMode(BLEND);
 //  buffer.rect(0, 0, 800, 600);
   buffer.blendMode(ADD);
   for (int i = 0; i < audioOutput.bufferSize()/BUFFER_SCALE-1; i++)
   {
     float x1 = map(i, 0, audioOutput.bufferSize()/BUFFER_SCALE, 0, width);
     float x2 = map(i+1, 0, audioOutput.bufferSize()/BUFFER_SCALE, 0, width);
-    stroke(128);//strokeWeight(x2);
+    buffer.stroke(255);
+    //buffer.fill(255);
+    //strokeWeight(x2);
     //if (!inited)
     //    System.err.println("x1: "+x1+", x2: "+x2);
     buffer.line(x1, height/4 + audioOutput.left.get(i)*height/2, x2, height/4 + audioOutput.left.get(i+1)*height/2);
     buffer.line(x1, (3*height/4) + audioOutput.right.get(i)*height/2, x2, (3*height/4) + audioOutput.right.get(i+1)*height/2);
-
   }
 /*  
   for ( int i = 0; i < 400;i++) {
@@ -175,14 +193,16 @@ void drawPlot(){
     }
   }
   */
-  buffer.endDraw();
-  blendMode(BLEND);
-  pushMatrix();
+  //blendMode(BLEND);
+ // pushMatrix();
  //  rotateX(radians(45));
  //  translate(0, 0, 100);
    buffer.filter(BLUR, 1);
+   buffer.filter(DILATE);
+   buffer.filter(THRESHOLD, 0.02);
+   buffer.endDraw();
    image(buffer, 0, 0);
-  popMatrix();
+ // popMatrix();
   //inited=true;
  // blendMode(BLEND);
  // fill(0);
@@ -205,4 +225,10 @@ void moveGraphics(PGraphics c) {
   arrayCopy(moved, 0, c.pixels, 0, c.pixels.length);
   c.updatePixels();
   c.endDraw();
+}
+private boolean started=false;
+public void keyPressed(){
+  if (key=='S' || key=='s'){
+    started=true;
+  }
 }
